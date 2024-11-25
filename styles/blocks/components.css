@@ -46,6 +46,7 @@
 .email-block {
     max-width: 100%;
     display: flex;
+    margin-top: 1rem;
     justify-content: space-between;
     background-color: #fff;
     border: 2px solid rgba(236, 239, 244, 1);

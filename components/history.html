@@ -6,6 +6,26 @@
     <link rel="stylesheet" href="../styles/index.css" />
     <title>Запросы</title>
     <style>
+      .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745; /* Зеленый цвет для успешного уведомления */
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.5s ease;
+    opacity: 0;
+    z-index: 1000; /* Убедитесь, что уведомление выше остальных элементов */
+    pointer-events: none; /* Не хочет клиента взаимодействовать с уведомлением */
+}
+.notification.visible {
+    opacity: 1;
+}
+.notification.hidden {
+    opacity: 0;
+}
       .active {
         background-color: var(--color-btn-blue);
         color: white;
@@ -19,6 +39,7 @@
         border-radius: 4px;
         cursor: pointer;
         max-width: 100%;
+        width: 100px;
       }
 
       #composeBtn {
@@ -66,11 +87,40 @@
       }
 
       .email-form-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 15px;
-      }
+    display: flex;
+    justify-content: flex-end; /* Выровнять кнопки вправо */
+}
+
+.email-form-buttons button {
+    padding: 10px 20px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    color: white;
+}
+
+/* Стиль для кнопки "Отправить" */
+.email-form-buttons button[type="submit"] {
+    background-color: #007bff; /* Основной цвет */
+}
+
+.email-form-buttons button[type="submit"]:hover {
+    background-color: #0056b3; /* Темный цвет при наведении */
+    transform: translateY(-2px); /* Поднимаем кнопку немного выше */
+}
+
+/* Стиль для кнопки "Отмена" */
+.email-form-buttons button[type="button"] {
+    background-color: #d9534f; /* Цвет для отмены */
+}
+
+.email-form-buttons button[type="button"]:hover {
+    background-color: #c9302c; /* Темный цвет при наведении */
+    transform: translateY(-2px); /* Поднимаем кнопку немного выше */
+}
 
       .send-button, .btn-email-open {
         background-color: var(--color-btn-blue);
@@ -104,6 +154,56 @@
         display: flex;
         gap: 10px;
       }
+
+      .btn-email-permanent-del {
+        background-color: var(--color-primary-red);
+        color: #fff;
+        max-width: 100%;
+        width: 120px;
+        margin-right: 1rem;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        max-width: 500px;
+        width: 90%;
+        transition: all 0.3s ease-in-out;
+        height: 60%;
+    }
+    .modal-header {
+        font-size: 20px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+    .modal-content {
+        margin-bottom: 20px;
+    }
+    .modal-footer {
+        text-align: right;
+    }
+    .modal button {
+        padding: 8px 12px;
+        margin-left: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        transition: background-color 0.3s;
+    }
+    .modal button:hover {
+        background-color: #0056b3; /* Более темный цвет при наведении */
+    }
     </style>
   </head>
   <body class="body">
@@ -424,22 +524,29 @@
           </div>
           <button id="composeBtn">Написать</button>
 
-          <div class="email-form-overlay" id="emailFormOverlay">
-            <form class="email-form">
-              <h3>Новое сообщение</h3>
-              <input type="email" id="emailTo" placeholder="Кому" required>
-              <input type="text" id="emailSubject" placeholder="Тема" required>
-              <textarea id="emailBody" rows="10" placeholder="Текст сообщения" required></textarea>
-              <div class="email-form-buttons">
-                <button class="cancel-button" id="cancelEmail">Закрыть</button>
-                <button type="submit" class="send-button" id="sendEmail">Отправить</button>
-              </div>
-            </form>
-          </div>
+          <!-- Добавьте в HTML -->
+<div id="emailFormOverlay" class="email-form-overlay">
+  <form id="emailForm" class="email-form">
+      <input type="email" id="emailTo" placeholder="Кому" required>
+      <input type="text" id="emailSubject" placeholder="Тема" required>
+      <textarea id="emailBody" placeholder="Текст письма" required></textarea>
+      <div class="email-form-buttons">
+        <button type="submit">Отправить</button>
+        <button type="button" onclick="emailClient.hideEmailForm()">Отмена</button>
+    </div>
+  </form>
+</div>
+          <div id="notification" class="notification hidden"></div>
+          <div id="emailContent"></div>
           <div class="email-blocks">
-            <div id="requestsContainer" class="email-blocks">
-              <!-- Email blocks will be inserted here based on the clicked button -->
+          <div id="requestsContainer" class="email-blocks"></div>
+          <div id="emailModal" class="modal">
+            <div class="modal-header" id="modalHeader"></div>
+            <div class="modal-content" id="modalContent"></div>
+            <div class="modal-footer">
+                <button onclick="emailClient.closeModal()">Закрыть</button>
             </div>
+        </div>
             <!-- <div class="email-block">
               <img
                 class="email-img-type"
@@ -499,6 +606,7 @@
         </div>
       </div>
     </div>
+
     <footer class="footer">
       <div class="container">
         <div class="footer__blocks">
@@ -702,7 +810,13 @@
 
       // Initialize the email system
       const emailSystem = new EmailSystem();*/
-      class EmailSystem {
+
+
+
+
+
+
+      /*class EmailSystem {
         constructor() {
           this.requests = {
             incoming: [],
@@ -775,38 +889,55 @@
         }
 
         async fetchEmails() {
-          try {
-            const response = await fetch('http://localhost:3000/api/get-emails');
-            const result = await response.json();
+    try {
+        const response = await fetch('http://localhost:3000/api/get-emails');
+        const result = await response.json();
 
-            if (result.success) {
-              const newEmails = result.emails.map(email => ({
+        // Log the complete result for debugging
+        console.log(result);
+
+        // Check if the fetch was successful
+        if (result.success) {
+            const newEmails = result.emails.map(email => ({
                 type: "Входящее",
                 description: email.subject,
                 content: email.body,
                 from: email.from,
                 date: email.date
-              }));
+            }));
 
-              // Check for new emails by comparing with existing ones
-              const existingIds = new Set(this.requests.incoming.map(e => e.description + e.date));
-              const uniqueNewEmails = newEmails.filter(email =>
-                !existingIds.has(email.description + email.date)
-              );
-
-              if (uniqueNewEmails.length > 0) {
-                this.requests.incoming = [...uniqueNewEmails, ...this.requests.incoming];
-                this.saveToStorage();
-
-                if (this.incomingBtn.classList.contains("active")) {
-                  this.showRequests("incoming");
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching emails:', error);
-          }
+            // Отобразим последние 15 входящих
+            this.renderEmails(newEmails);
+        } else {
+            console.error("Failed to fetch emails:", result.error);
         }
+    } catch (error) {
+        console.error('Error fetching emails:', error);
+    }
+}
+
+// Функция для отображения сообщений
+renderEmails(emails) {
+    const emailContainer = document.querySelector('.emailContainer'); // Убедитесь, что этот ID указан в вашем HTML
+    emailContainer.innerHTML = ''; // Очистить контейнер перед добавлением новых сообщений
+
+    emails.forEach(email => {
+        const emailBlock = document.createElement('div');
+        emailBlock.className = 'email-block'; // Класс для блока письма
+        emailBlock.innerHTML = `
+            <h3>${email.description}</h3>
+            <p>От: ${email.from}</p>
+            <p>Дата: ${email.date}</p>
+            <button onclick="showEmailContent('${email.description}', '${email.content}')">Открыть</button>
+        `;
+        emailContainer.appendChild(emailBlock); // Добавление нового элемента в контейнер
+    });
+}
+
+showEmailContent(subject, content) {
+    const emailContentBlock = document.getElementById('emailContent'); // Контейнер для отображения содержания письма
+    emailContentBlock.innerHTML = `<h2>${subject}</h2><p>${content}</p>`; // Заполнение содержимым
+}
 
         loadInitialState() {
           this.incomingBtn.classList.add("active");
@@ -911,7 +1042,7 @@
               <p class="email-type">${request.type}</p>
               <p class="email-description">${request.description}</p>
               ${request.from ? `<p class="email-from">От: ${request.from}</p>` : ''}
-              ${request.date ? `<p class="email-date">Дата: ${new Date(request.date).toLocaleString()}</p>` : ''}
+              ${request.date ? `<p class="email-date">${new Date(request.date).toLocaleString()}</p>` : ''}
               <div class="email-block-buttons">
                 <button class="btn-email-open" data-type="${type}" data-index="${index}">Открыть</button>
                 <button class="btn-email-del">Удалить</button>
@@ -960,7 +1091,223 @@
       }
 
       // Initialize the email system
-      const emailSystem = new EmailSystem();
+      const emailSystem = new EmailSystem();*/
+
+      class EmailClient {
+            constructor() {
+                this.requests = {
+                    incoming: [],
+                    outgoing: [],
+                    basket: []
+                };
+                this.currentTab = 'incoming';
+                this.requestsContainer = document.getElementById("requestsContainer");
+                this.emailFormOverlay = document.getElementById("emailFormOverlay");
+                this.emailForm = document.getElementById("emailForm");
+
+                // Инициализация обработчиков событий
+                this.initializeEventListeners();
+                this.loadOutgoingEmails(); // Загружает исходящие из localStorage
+                this.fetchEmails(); // Загружает входящие письма
+            }
+
+            initializeEventListeners() {
+                document.getElementById('incomingBtn').addEventListener('click', () => this.showRequests('incoming'));
+                document.getElementById('outgoingBtn').addEventListener('click', () => this.showRequests('outgoing'));
+                document.getElementById('basketBtn').addEventListener('click', () => this.showRequests('basket'));
+                document.getElementById('composeBtn').addEventListener('click', () => this.showEmailForm());
+
+                this.emailForm.addEventListener("submit", (e) => this.handleEmailSubmit(e));
+
+                this.emailFormOverlay.addEventListener("click", (e) => {
+                    if (e.target === this.emailFormOverlay) {
+                        this.hideEmailForm();
+                    }
+                });
+            }
+
+            async fetchEmails() {
+    const storedEmails = localStorage.getItem('incomingEmails');
+    if (storedEmails) {
+        console.log('Загружаем письма из localStorage');
+        this.requests.incoming = JSON.parse(storedEmails); // Загружаем из localStorage, если есть
+        this.showRequests('incoming');
+    } else {
+        console.log('Загружаем письма с сервера');
+        try {
+            const response = await fetch('http://localhost:3000/api/get-emails');
+            const result = await response.json();
+            console.log(result)
+            if (result.success) {
+                console.log(result)
+                this.requests.incoming = result.emails.map(email => ({
+                    type: "Входящее",
+                    description: email.subject || "Без темы",
+                    content: email.body || "",
+                    from: email.from || "Неизвестный отправитель",
+                    date: email.date || new Date().toISOString()
+                }));
+
+                // Сохраняем в localStorage
+                localStorage.setItem('incomingEmails', JSON.stringify(this.requests.incoming));
+
+                this.showRequests('incoming');
+            }
+        } catch (error) {
+            console.error('Error fetching emails:', error);
+        }
+    }
+}
+
+            loadOutgoingEmails() {
+                const storedOutgoing = localStorage.getItem('outgoingEmails');
+                if (storedOutgoing) {
+                    this.requests.outgoing = JSON.parse(storedOutgoing);
+                }
+            }
+
+            saveOutgoingEmails() {
+                localStorage.setItem('outgoingEmails', JSON.stringify(this.requests.outgoing));
+            }
+
+            showRequests(type) {
+                this.requestsContainer.innerHTML = "";
+
+                this.requests[type].forEach((request, index) => {
+                    const emailBlock = document.createElement("div");
+                    emailBlock.classList.add("email-block");
+                    emailBlock.innerHTML = `
+                        <img class="email-img-type" width="40" src="../media/Group-Message.svg" alt="icon">
+                        <p class="email-type">${request.type}</p>
+                        <p class="email-description">${request.description}</p>
+                        ${request.from ? `<p class="email-from">От: ${request.from}</p>` : ''}
+                        <div class="email-block-buttons">
+                            <button class="btn-email-open" data-type="${type}" data-index="${index}">Открыть</button>
+                            ${type !== 'basket' ?
+                              `<button class="btn-email-del" data-type="${type}" data-index="${index}">В корзину</button>` :
+                              `<button class="btn-email-permanent-del" data-index="${index}">Удалить навсегда</button>`
+                            }
+                        </div>
+                    `;
+                    this.requestsContainer.appendChild(emailBlock);
+
+                    emailBlock.querySelector('.btn-email-open').addEventListener('click', () => {
+                        this.openEmailModal(type, index);
+                    });
+
+                    emailBlock.querySelector('.btn-email-del')?.addEventListener('click', () => {
+                        this.moveToBasket(type, index);
+                    });
+
+                    emailBlock.querySelector('.btn-email-permanent-del')?.addEventListener('click', () => {
+                        this.permanentlyDelete(index);
+                    });
+                });
+            }
+
+            openEmailModal(type, index) {
+                const email = this.requests[type][index];
+                document.getElementById('modalHeader').innerText = email.description; // Заголовок модального окна
+                document.getElementById('modalContent').innerHTML = `
+                    <p><strong>От:</strong> ${email.from || 'Неизвестен'}</p>
+                    <p><strong>Дата:</strong> ${new Date(email.date).toLocaleString()}</p>
+                    <p><strong>Содержимое:</strong></p>
+                    <p>${email.content}</p>
+                `;
+                document.getElementById('emailModal').style.display = 'block'; // Показываем модальное окно
+            }
+
+            closeModal() {
+                document.getElementById('emailModal').style.display = 'none'; // Закрываем модальное окно
+            }
+
+            moveToBasket(type, index) {
+                const emailToMove = this.requests[type].splice(index, 1)[0]; // Удаляет письмо и сохраняет его
+                this.requests.basket.unshift(emailToMove); // Добавляет в корзину
+                this.showRequests(type);
+            }
+
+            permanentlyDelete(index) {
+                if (confirm("Вы уверены, что хотите удалить это письмо навсегда?")) {
+                    this.requests.basket.splice(index, 1); // Удаляет навсегда
+                    this.showRequests('basket'); // Обновляет отображение корзины
+                }
+            }
+
+            showEmailForm() {
+                this.emailFormOverlay.style.display = 'block';
+                this.emailForm.reset();
+            }
+
+            hideEmailForm() {
+                this.emailFormOverlay.style.display = 'none';
+            }
+
+            showNotification(message) {
+              const notification = document.getElementById('notification');
+              notification.innerText = message;
+              notification.classList.remove('hidden');
+              notification.classList.add('visible');
+
+              setTimeout(() => {
+                  notification.classList.remove('visible');
+                  notification.classList.add('hidden');
+              }, 2000); // Убираем уведомление через 2 секунды
+}
+
+            async handleEmailSubmit(e) {
+                e.preventDefault();
+
+                const to = document.getElementById("emailTo").value;
+                const subject = document.getElementById("emailSubject").value;
+                const body = document.getElementById("emailBody").value;
+
+                if (!to || !subject || !body) {
+                    alert("Пожалуйста, заполните все поля");
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:3000/api/send-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ to, subject, body })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        const newEmail = {
+                            type: "Исходящее",
+                            description: subject,
+                            content: body,
+                            date: new Date().toISOString()
+                        };
+
+                        this.requests.outgoing.unshift(newEmail); // Добавляем новое письмо
+                        this.saveOutgoingEmails(); // Сохраняем в localStorage
+
+                        this.hideEmailForm();
+
+                        if (this.currentTab === 'outgoing') {
+                            this.showRequests('outgoing');
+                        }
+
+                        this.showNotification('Письмо успешно отправлено');
+                    } else {
+                        alert('Ошибка при отправке письма');
+                    }
+                } catch (error) {
+                    console.error('Ошибка отправки письма:', error);
+                    alert('Ошибка при отправке письма');
+                }
+            }
+        }
+
+        // Создаем экземпляр класса
+      const emailClient = new EmailClient();
     </script>
   </body>
 </html>
